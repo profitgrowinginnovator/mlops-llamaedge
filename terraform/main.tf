@@ -33,29 +33,3 @@ resource "google_artifact_registry_repository" "docker_repo" {
   description  = "Repository for Docker images"
 }
 
-# Cloud Build to Build and Push Docker Image
-resource "google_cloudbuild_trigger" "docker_build" {
-  name        = "docker-build-trigger"
-  description = "Build and push Docker image to Artifact Registry"
-  filename    = "cloudbuild.yaml"
-
-  included_files = ["Dockerfile"]
-}
-
-# Cloud Build YAML File
-resource "local_file" "cloudbuild_yaml" {
-  filename = "cloudbuild.yaml"
-  content  = <<-EOT
-  steps:
-    - name: "gcr.io/cloud-builders/docker"
-      args: [
-        "build", "-t", "${var.region}-docker.pkg.dev/${var.project_id}/docker-repo/wasmedge:latest", "."
-      ]
-    - name: "gcr.io/cloud-builders/docker"
-      args: [
-        "push", "${var.region}-docker.pkg.dev/${var.project_id}/docker-repo/wasmedge:latest"
-      ]
-  images:
-    - "${var.region}-docker.pkg.dev/${var.project_id}/docker-repo/wasmedge:latest"
-  EOT
-}

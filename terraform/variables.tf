@@ -17,8 +17,3 @@ variable "wasm_path" {
   description = "Path to the WASM file in GCS"
   type        = string
 }
-cat 1_google_setup.tf 
-provider "google" {
-  project = var.project_id
-  region  = var.region
-}
