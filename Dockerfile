@@ -78,3 +78,22 @@ COPY --from=ubuntu-cuda /lib/x86_64-linux-gnu/libmd.so.0 /lib/x86_64-linux-gnu/l
 COPY --from=ubuntu-cuda /lib/x86_64-linux-gnu/libicudata.so.74 /lib/x86_64-linux-gnu/libicudata.so.74
 COPY --from=ubuntu-cuda /usr/local/lib/wasmedge /wasmedge/plugin
 ENTRYPOINT ["/wasmedge/bin/wasmedge" ]
+
+FROM ubuntu-run AS tiny-llama
+RUN apt update &&  \
+    apt install -y curl
+RUN rm -rf /var/lib/apt/lists/*
+RUN mkdir /model
+RUN curl -L -o /model/tinyllama-1.1b-chat-v1.0-q8_0.gguf \
+https://huggingface.co/NightShade9x9/TinyLlama-1.1B-Chat-v1.0-Q8_0-GGUF/resolve/main/tinyllama-1.1b-chat-v1.0-q8_0.gguf
+RUN mkdir /app
+RUN curl -L -o /app/llama-api-server.wasm \
+https://github.com/LlamaEdge/LlamaEdge/releases/download/0.15.0/llama-api-server.wasm
+EXPOSE 8080
+ENTRYPOINT ["/wasmedge/bin/wasmedge", \
+        "run", \
+        "--dir", ".:.", \
+        "--env", "LLAMA_LOG=info", \
+        "--nn-preload", "default:GGML:AUTO:/model/tinyllama-1.1b-chat-v1.0-q8_0.gguf", \
+        "/app/llama-api-server.wasm", \
+        "--prompt-template", "llama-3-chat"]
